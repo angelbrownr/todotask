@@ -1,14 +1,12 @@
 pipeline {
     agent any
     environment {
-        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
-        DOCKER_HOST = "unix:///Users/admin/.docker/run/docker.sock"
+        PATH = "/Users/admin/.docker/bin:/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
     }
     stages {
         stage('Build Image') {
             steps {
                 sh '''
-                echo $PATH
                 which docker
                 docker --version
                 docker build -t brownangelr/todoapp:latest .
