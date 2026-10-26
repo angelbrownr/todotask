@@ -1,49 +1,26 @@
 pipeline {
     agent any
-    
+    environment {
+        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+        DOCKER_HOST = "unix:///Users/admin/.docker/run/docker.sock"
+    }
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        
         stage('Build Image') {
             steps {
-                sh 'docker build -t brownangelr/todoapp:latest .'
-            }
-        }
-        
-        stage('Test Run') {
-            steps {
                 sh '''
-                  docker rm -f todo-app 2>/dev/null || true
-                  docker run -d --name todo-app -p 3100:3000 brownangelr/todoapp:latest
-                  sleep 5
-                  curl -f http://localhost:3100 || true
-                  docker rm -f todo-app 2>/dev/null || true
+                echo $PATH
+                which docker
+                docker --version
+                docker build -t brownangelr/todoapp:latest .
                 '''
             }
         }
-        
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                      echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                      docker push brownangelr/todoapp:latest
-                      docker logout
-                    '''
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push brownangelr/todoapp:latest'
                 }
-            }
-        }
-        
-        stage('Deploy') {
-            steps {
-                sh '''
-                  docker rm -f todo-app 2>/dev/null || true
-                  docker run -d --name todo-app --restart unless-stopped -p 3000:3000 brownangelr/todoapp:latest
-                '''
             }
         }
     }
